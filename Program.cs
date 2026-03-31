@@ -88,7 +88,12 @@ List<Item> SeedItems() =>
 
 app.MapGet("/", async ctx =>
 {
-    var html = @"<!DOCTYPE html><html lang='tr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>iDATA Giriş</title></head>
+    var html = @"<!DOCTYPE html><html lang='tr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>iDATA Giriş</title>
+    <style>
+        .loader { border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 3px solid #fff; width: 18px; height: 18px; animation: spin 1s linear infinite; display: none; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    </head>
     <body style='font-family:sans-serif; background:linear-gradient(135deg, #667eea, #764ba2); margin:0; height:100vh; display:flex; justify-content:center; align-items:center; color:white'>
     <div style='width:100%; height:70px; background:rgba(0,0,0,0.3); position:fixed; top:0; left:0; right:0; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px; backdrop-filter:blur(10px); z-index:1000;'>iDATA Evrak Takip Servisi</div>
     <div style='background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(15px); padding:40px; border-radius:24px; width:340px; text-align:center; border:1px solid rgba(255,255,255,0.2)'>
@@ -96,16 +101,36 @@ app.MapGet("/", async ctx =>
         <form onsubmit='event.preventDefault(); login();'>
             <input id='email' type='text' placeholder='Kullanıcı Adı' required style='width:100%; padding:14px; margin-bottom:15px; border-radius:12px; border:none; box-sizing:border-box;'/>
             <input id='pw' type='password' placeholder='Şifre' required style='width:100%; padding:14px; margin-bottom:15px; border-radius:12px; border:none; box-sizing:border-box;'/>
-            <div id='error-msg' style='color:#ffb3b3; font-size:14px; margin-bottom:15px; font-weight:bold;'></div>
-            <button type='submit' style='width:100%; padding:14px; border-radius:12px; border:none; background:#764ba2; color:white; font-weight:bold; cursor:pointer;'>Giriş</button>
+            <div id='error-msg' style='color:#ffb3b3; font-size:14px; margin-bottom:15px; font-weight:bold; min-height:20px;'></div>
+            <button id='login-btn' type='submit' style='width:100%; padding:14px; border-radius:12px; border:none; background:#764ba2; color:white; font-weight:bold; cursor:pointer; display:flex; justify-content:center; align-items:center;'>
+                <div id='loader' class='loader'></div><span id='btn-text'>Giriş</span>
+            </button>
         </form>
     </div>
     <script>
     async function login(){
+        const btn = document.getElementById('login-btn');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btn-text');
+        
+        btn.disabled = true;
+        btn.style.opacity = '0.8';
+        loader.style.display = 'block';
+        btnText.innerText = 'Giriş Yapılıyor...';
+
         const email = document.getElementById('email').value;
         const pw = document.getElementById('pw').value;
         const res = await fetch('/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email, pw }) });
-        if(res.ok) location = '/app'; else document.getElementById('error-msg').innerText = 'Hatalı giriş!';
+        
+        if(res.ok) {
+            location = '/app';
+        } else {
+            document.getElementById('error-msg').innerText = 'Hatalı giriş!';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            loader.style.display = 'none';
+            btnText.innerText = 'Giriş';
+        }
     }
     </script></body></html>";
     ctx.Response.ContentType = "text/html; charset=utf-8";
@@ -134,7 +159,7 @@ app.MapGet("/app", async ctx => {
     <style>
         body {{ font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#667eea,#764ba2); margin:0; color:white; padding-top:130px; padding-bottom:50px; min-height: 100vh; }}
         .header-container {{ position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); }}
-        .header {{ height: 70px; padding: 0 30px; display: flex; justify-content: space-between; align-items: center; }}
+        .header {{ height: 70px; padding: 0 30px; display: flex; justify-content: space-between; align-items: center; position: relative; }}
         .progress-wrapper {{ height: 30px; background: rgba(255,255,255,0.1); position: relative; display: flex; align-items: center; overflow: hidden; }}
         #progress-bar {{ height: 100%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); width: 0%; transition: width 0.5s ease; }}
         #progress-text {{ position: absolute; width: 100%; text-align: center; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }}
@@ -170,8 +195,14 @@ app.MapGet("/app", async ctx => {
         .btn-add {{ background: #2ed573; color: white; width: 100%; margin-top: 5px; justify-content: center; }}
         .btn:hover {{ filter: brightness(1.2); transform: scale(1.02); }}
 
-        .btn-reset {{ background: #ff4757; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }}
         ul {{ margin: 10px 0 30px 0; padding-left: 20px; font-size: 13px; opacity: 0.8; pointer-events: none; }}
+
+        .user-nav {{ display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 12px; border-radius: 10px; transition: 0.2s; }}
+        .user-nav:hover {{ background: rgba(255,255,255,0.1); }}
+        .menu-dropdown {{ position: absolute; top: 60px; right: 20px; background: #1e1e2e; border-radius: 12px; min-width: 180px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); z-index: 10001; }}
+        .menu-dropdown.active {{ display: flex; }}
+        .menu-item {{ padding: 15px 20px; color: white; border: none; background: none; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; font-family: inherit; font-size: 14px; text-decoration: none; width:100%; box-sizing: border-box; }}
+        .menu-item:hover {{ background: rgba(255,255,255,0.1); }}
     </style></head><body>
     
     <div id='edit-modal' class='modal-overlay'>
@@ -222,9 +253,16 @@ app.MapGet("/app", async ctx => {
     <div class='header-container'>
         <div class='header'>
             <div style='font-weight:bold; font-size: 1.2rem;'><i class='fa-solid fa-passport'></i> iDATA Evrak Takip</div>
-            <div style='display:flex; align-items:center;'>
-                <button onclick='openResetModal()' class='btn-reset' style='margin-right:20px;'><i class='fa-solid fa-rotate-left'></i> Sıfırla</button>
-                <span>👤 <b>{user.Name}</b></span> <a href='/logout' style='color:white; margin-left:15px; text-decoration:none;'><i class='fa-solid fa-right-from-bracket'></i></a>
+            <div>
+                <div class='user-nav' onclick='toggleMenu(event)'>
+                    <i class='fa-solid fa-circle-user' style='font-size: 24px;'></i>
+                    <span><b>{user.Name}</b></span>
+                    <i class='fa-solid fa-bars' style='font-size: 16px; margin-left: 5px; opacity:0.8;'></i>
+                </div>
+                <div id='nav-menu' class='menu-dropdown'>
+                    <button class='menu-item' onclick='openResetModal()'><i class='fa-solid fa-rotate-left' style='color:#ffa502;'></i> Listeyi Sıfırla</button>
+                    <a href='/logout' class='menu-item' style='color:#ff4757; border-top: 1px solid rgba(255,255,255,0.05);'><i class='fa-solid fa-right-from-bracket'></i> Çıkış Yap</a>
+                </div>
             </div>
         </div>
         <div class='progress-wrapper'>
@@ -242,6 +280,18 @@ app.MapGet("/app", async ctx => {
 
     <script>
     let currentItems = [];
+
+    function toggleMenu(e) {{
+        e.stopPropagation();
+        document.getElementById('nav-menu').classList.toggle('active');
+    }}
+
+    window.onclick = function() {{
+        const menu = document.getElementById('nav-menu');
+        if (menu && menu.classList.contains('active')) {{
+            menu.classList.remove('active');
+        }}
+    }}
 
     async function load(){{
         const res = await fetch('/items');
