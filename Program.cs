@@ -157,28 +157,25 @@ app.MapGet("/app", async ctx => {
     var html = $@"<!DOCTYPE html><html lang='tr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Vize Takip Pro</title>
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>
     <style>
-        body {{ font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#667eea,#764ba2); margin:0; color:white; padding-top:130px; padding-bottom:50px; min-height: 100vh; }}
+        body {{ font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#667eea,#764ba2); margin:0; color:white; padding-top:130px; padding-bottom:90px; min-height: 100vh; box-sizing:border-box; }}
         .header-container {{ position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); }}
         .header {{ height: 70px; padding: 0 30px; display: flex; justify-content: space-between; align-items: center; position: relative; }}
         .progress-wrapper {{ height: 30px; background: rgba(255,255,255,0.1); position: relative; display: flex; align-items: center; overflow: hidden; }}
         #progress-bar {{ height: 100%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); width: 0%; transition: width 0.5s ease; }}
         #progress-text {{ position: absolute; width: 100%; text-align: center; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }}
         .grid-container {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; max-width: 1400px; margin: auto; }}
-        
         #congrats-msg {{ grid-column: 1 / -1; background: rgba(46, 213, 115, 0.2); border: 2px solid #2ed573; color: #2ed573; padding: 20px; border-radius: 16px; text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; display: none; animation: pulse 2s infinite; }}
         @keyframes pulse {{ 0% {{ transform: scale(1); }} 50% {{ transform: scale(1.02); }} 100% {{ transform: scale(1); }} }}
-
         .item-card {{ background: rgba(255, 255, 255, 0.12); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; cursor: pointer; transition: 0.3s; min-height: 120px; }}
         .item-card:hover {{ background: rgba(255, 255, 255, 0.2); transform: translateY(-3px); }}
         .done-card {{ opacity: 0.8; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(173, 255, 47, 0.3);}}
+        .selected-card {{ box-shadow: 0 0 0 2px #2ed573; background: rgba(46, 213, 115, 0.1); }}
         .done-text {{ text-decoration: line-through; color: #adff2f; }}
         .card-actions {{ position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px; }}
-        
         .icon-btn {{ background: rgba(0,0,0,0.3); color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }}
         .icon-btn:hover:not(:disabled) {{ background: rgba(255,255,255,0.2); }}
         .icon-btn:disabled {{ opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }}
 
-        /* MODAL STYLES */
         .modal-overlay {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 2000; }}
         .modal-content {{ background: #1e1e2e; width: 90%; max-width: 500px; padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }}
         .modal-content h3 {{ margin-top: 0; font-weight: 400; }}
@@ -203,6 +200,43 @@ app.MapGet("/app", async ctx => {
         .menu-dropdown.active {{ display: flex; }}
         .menu-item {{ padding: 15px 20px; color: white; border: none; background: none; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; font-family: inherit; font-size: 14px; text-decoration: none; width:100%; box-sizing: border-box; }}
         .menu-item:hover {{ background: rgba(255,255,255,0.1); }}
+
+        .selection-bar {{ position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 46, 0.95); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; display: none; gap: 15px; z-index: 10000; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); align-items: center; flex-wrap: wrap; justify-content: center; width: max-content; max-width: 90%; }}
+        .selection-bar.active {{ display: flex; animation: slideUp 0.3s ease-out; }}
+        @keyframes slideUp {{ from {{ bottom: -50px; opacity: 0; }} to {{ bottom: 20px; opacity: 1; }} }}
+
+        @media (max-width: 640px) {{
+            .selection-bar {{
+                width: calc(100% - 24px);
+                padding: 12px 14px;
+                gap: 10px;
+            }}
+
+            .bulk-icon-btn {{
+                width: 42px !important;
+                height: 42px !important;
+                padding: 0 !important;
+                justify-content: center;
+                border-radius: 12px;
+            }}
+
+            .bulk-icon-btn .bulk-text {{
+                display: none;
+            }}
+
+            .bulk-icon-btn i {{
+                font-size: 16px;
+                margin: 0;
+            }}
+
+            .selection-bar > div:last-child {{
+                gap: 8px;
+            }}
+
+            .selection-bar .btn-secondary {{
+                white-space: nowrap;
+            }}
+        }}
     </style></head><body>
     
     <div id='edit-modal' class='modal-overlay'>
@@ -253,13 +287,14 @@ app.MapGet("/app", async ctx => {
     <div class='header-container'>
         <div class='header'>
             <div style='font-weight:bold; font-size: 1.2rem;'><i class='fa-solid fa-passport'></i> iDATA Evrak Takip</div>
-            <div>
+            <div style='display:flex; align-items:center; gap:10px;'>
                 <div class='user-nav' onclick='toggleMenu(event)'>
                     <i class='fa-solid fa-circle-user' style='font-size: 24px;'></i>
                     <span><b>{user.Name}</b></span>
                     <i class='fa-solid fa-bars' style='font-size: 16px; margin-left: 5px; opacity:0.8;'></i>
                 </div>
                 <div id='nav-menu' class='menu-dropdown'>
+                    <button class='menu-item' onclick='toggleSelectionMode()'><i class='fa-solid fa-list-check' style='color:#2ed573;'></i> Seçim Modu</button>
                     <button class='menu-item' onclick='openResetModal()'><i class='fa-solid fa-rotate-left' style='color:#ffa502;'></i> Listeyi Sıfırla</button>
                     <a href='/logout' class='menu-item' style='color:#ff4757; border-top: 1px solid rgba(255,255,255,0.05);'><i class='fa-solid fa-right-from-bracket'></i> Çıkış Yap</a>
                 </div>
@@ -278,8 +313,34 @@ app.MapGet("/app", async ctx => {
         <div id='list' style='display: contents;'></div>
     </div>
 
+   <div id='selection-actions' class='selection-bar'>
+    <div style='display:flex; align-items:center; gap:15px; margin-right:10px;'>
+        <span id='sel-count' style='font-weight:bold; font-size:14px;'>0 Seçildi</span>
+        <button class='btn btn-secondary bulk-btn' style='padding:6px 12px; font-size:13px;' onclick='toggleSelectAll()'>
+            Tümünü Seç
+        </button>
+    </div>
+    <div style='display:flex; gap:10px;'>
+        <button class='btn btn-add bulk-btn bulk-icon-btn' style='width:auto; margin:0; padding:8px 15px;' onclick='bulkAction(true)' title='Tamamlandı' aria-label='Tamamlandı'>
+            <i class='fa-solid fa-check-double'></i>
+            <span class='bulk-text'>Tamamlandı</span>
+        </button>
+
+        <button class='btn btn-danger bulk-btn bulk-icon-btn' style='width:auto; margin:0; padding:8px 15px;' onclick='bulkAction(false)' title='Tamamlanmadı' aria-label='Tamamlanmadı'>
+            <i class='fa-solid fa-xmark'></i>
+            <span class='bulk-text'>Tamamlanmadı</span>
+        </button>
+
+        <button class='btn btn-secondary bulk-btn' style='padding:8px 15px;' onclick='toggleSelectionMode()'>
+            İptal
+        </button>
+    </div>
+</div>
+
     <script>
     let currentItems = [];
+    let isSelectionMode = false;
+    let selectedIds = [];
 
     function toggleMenu(e) {{
         e.stopPropagation();
@@ -293,10 +354,58 @@ app.MapGet("/app", async ctx => {
         }}
     }}
 
+    function toggleSelectionMode() {{
+        isSelectionMode = !isSelectionMode;
+        selectedIds = [];
+        
+        const actionMenu = document.getElementById('selection-actions');
+        if (isSelectionMode) {{
+            actionMenu.classList.add('active');
+        }} else {{
+            actionMenu.classList.remove('active');
+            document.getElementById('btn-select-mode').style.display = 'flex';
+        }}
+        
+        updateSelectionUI();
+        loadUIOnly();
+    }}
+
+    function toggleSelectAll() {{
+        if(selectedIds.length === currentItems.length) {{
+            selectedIds = [];
+        }} else {{
+            selectedIds = currentItems.map(x => x.id);
+        }}
+        updateSelectionUI();
+        loadUIOnly();
+    }}
+
+    function updateSelectionUI() {{
+        document.getElementById('sel-count').innerText = selectedIds.length + ' Seçildi';
+    }}
+
+    async function bulkAction(status) {{
+        if(selectedIds.length === 0) return;
+        
+        await fetch('/items/bulk', {{
+            method: 'PUT',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify({{ ids: selectedIds, status: status }})
+        }});
+        
+        isSelectionMode = false;
+        selectedIds = [];
+        document.getElementById('selection-actions').classList.remove('active');
+        load();
+    }}
+
     async function load(){{
         const res = await fetch('/items');
         currentItems = await res.json();
-        
+        loadUIOnly();
+    }}
+
+    function loadUIOnly() {{
         const total = currentItems.length;
         const done = currentItems.filter(x => x.done).length;
         const percent = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -310,16 +419,32 @@ app.MapGet("/app", async ctx => {
         const list = document.getElementById('list');
         list.innerHTML = '';
         currentItems.forEach(i => {{
+            const isSelected = selectedIds.includes(i.id);
             const card = document.createElement('div');
-            card.className = 'item-card' + (i.done ? ' done-card' : '');
-            card.onclick = (e) => {{ if(!e.target.closest('.icon-btn')) toggle(i.id); }};
             
-            card.innerHTML = `
-                <div style='display:flex; align-items:center; gap:10px;'>
-                    <i class='fa-regular ${{i.done ? 'fa-circle-check' : 'fa-circle'}}' style='font-size:1.2rem; color:${{i.done ? '#adff2f' : 'white'}}'></i>
-                    <b class='${{i.done ? 'done-text' : ''}}'>${{i.title}}</b>
-                </div>
-                <ul>${{i.descriptions.map(d => `<li>${{d}}</li>`).join('')}}</ul>
+            let cardClasses = 'item-card';
+            if(i.done) cardClasses += ' done-card';
+            if(isSelectionMode && isSelected) cardClasses += ' selected-card';
+            card.className = cardClasses;
+            
+            card.onclick = (e) => {{ 
+                if(!e.target.closest('.icon-btn')) {{
+                    if(isSelectionMode) {{
+                        if(isSelected) selectedIds = selectedIds.filter(id => id !== i.id);
+                        else selectedIds.push(i.id);
+                        updateSelectionUI();
+                        loadUIOnly();
+                    }} else {{
+                        toggle(i.id); 
+                    }}
+                }}
+            }};
+            
+            const checkIcon = isSelectionMode 
+                ? `<div style='min-width:22px; height:22px; border:2px solid ${{isSelected ? '#2ed573' : 'rgba(255,255,255,0.5)'}}; border-radius:6px; display:flex; align-items:center; justify-content:center; background:${{isSelected ? '#2ed573' : 'transparent'}}; transition:0.2s;'><i class='fa-solid fa-check' style='color:white; font-size:12px; display:${{isSelected ? 'block' : 'none'}}'></i></div>`
+                : `<i class='fa-regular ${{i.done ? 'fa-circle-check' : 'fa-circle'}}' style='font-size:1.2rem; color:${{i.done ? '#adff2f' : 'white'}}'></i>`;
+
+            const actionsHtml = isSelectionMode ? '' : `
                 <div class='card-actions'>
                     <button class='icon-btn' ${{i.done ? 'disabled' : ''}} onclick='event.stopPropagation(); openEditModal(${{i.id}})' title='Düzenle'>
                         <i class='fa-solid fa-pen'></i>
@@ -328,6 +453,15 @@ app.MapGet("/app", async ctx => {
                         <i class='fa-solid fa-trash'></i>
                     </button>
                 </div>`;
+
+            card.innerHTML = `
+                <div style='display:flex; align-items:center; gap:10px;'>
+                    ${{checkIcon}}
+                    <b class='${{i.done ? 'done-text' : ''}}'>${{i.title}}</b>
+                </div>
+                <ul>${{i.descriptions.map(d => `<li>${{d}}</li>`).join('')}}</ul>
+                ${{actionsHtml}}`;
+                
             list.appendChild(card);
         }});
     }}
@@ -418,6 +552,23 @@ app.MapPut("/items/{id}/toggle", async (int id, HttpContext ctx) => {
     return Results.Ok();
 });
 
+app.MapPut("/items/bulk", async (BulkStatusRequest req, HttpContext ctx) => {
+    var email = ctx.Request.Cookies["user"];
+    if (string.IsNullOrEmpty(email)) return Results.Unauthorized();
+    var items = await GetItemsAsync(email);
+    bool changed = false;
+    
+    foreach(var item in items) {
+        if(req.Ids.Contains(item.Id) && item.Done != req.Status) {
+            item.Done = req.Status;
+            changed = true;
+        }
+    }
+    
+    if(changed) await SaveItemsAsync(email, items);
+    return Results.Ok();
+});
+
 app.MapPut("/items/{id}", async (int id, ItemUpdate req, HttpContext ctx) => {
     var email = ctx.Request.Cookies["user"];
     if (string.IsNullOrEmpty(email)) return Results.Unauthorized();
@@ -465,3 +616,8 @@ public class User {
 }
 public class LoginRequest { public string email { get; set; } = ""; public string pw { get; set; } = ""; }
 public class ItemUpdate { public string Title { get; set; } = ""; public List<string> Descriptions { get; set; } = []; }
+
+public class BulkStatusRequest { 
+    public List<int> Ids { get; set; } = []; 
+    public bool Status { get; set; } 
+}
