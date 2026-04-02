@@ -153,13 +153,13 @@ app.MapGet("/app", async ctx => {
         #congrats-msg {{ grid-column: 1 / -1; background: rgba(46, 213, 115, 0.2); border: 2px solid #2ed573; color: #2ed573; padding: 20px; border-radius: 16px; text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; display: none; animation: pulse 2s infinite; }}
         @keyframes pulse {{ 0% {{ transform: scale(1); }} 50% {{ transform: scale(1.02); }} 100% {{ transform: scale(1); }} }}
         
-        .item-card {{ background: rgba(255, 255, 255, 0.12); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; cursor: default; transition: 0.3s; min-height: 120px; box-sizing: border-box; touch-action: none; }}
+        .item-card {{ background: rgba(255, 255, 255, 0.12); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; cursor: default; transition: 0.3s; min-height: 120px; box-sizing: border-box; }}
         .item-card:hover {{ background: rgba(255, 255, 255, 0.2); transform: translateY(-3px); }}
         .done-card {{ opacity: 0.8; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(173, 255, 47, 0.3);}}
         .selected-card {{ box-shadow: 0 0 0 2px #2ed573; background: rgba(46, 213, 115, 0.1); opacity: 0.5; }}
         .done-text {{ text-decoration: line-through; color: #adff2f; }}
         
-        .drag-handle {{ position: absolute; top: 10px; right: 10px; cursor: grab; opacity: 0.4; transition: 0.2s; padding: 8px; color: white; z-index: 5; font-size: 1.2rem; }}
+        .drag-handle {{ position: absolute; top: 10px; right: 10px; cursor: grab; opacity: 0.3; transition: 0.2s; padding: 5px; color: white; z-index: 5; }}
         .item-card:hover .drag-handle {{ opacity: 1; }}
         .drag-handle:active {{ cursor: grabbing; }}
 
@@ -301,7 +301,7 @@ app.MapGet("/app", async ctx => {
                     <i class='fa-solid ${{isSelectionMode ? (isSelected ? 'fa-square-check' : 'fa-square') : (i.done ? 'fa-circle-check' : 'fa-circle')}}' style='font-size:1.2rem;color:${{i.done || isSelected ? '#adff2f' : 'white'}}'></i>
                     <b class='${{i.done ? 'done-text' : ''}}'>${{i.title}}</b>
                 </div>
-                <ul style='padding-right: 25px;'>${{i.descriptions.map(d => `<li>${{d}}</li>`).join('')}}</ul>
+                <ul style='padding-right: 20px;'>${{i.descriptions.map(d => `<li>${{d}}</li>`).join('')}}</ul>
                 ${{!isSelectionMode ? `
                 <div class='card-actions'>
                     <button class='icon-btn' ${{i.done ? 'disabled' : ''}} onclick='event.stopPropagation(); openEditModal(${{i.id}})'><i class='fa-solid fa-pen'></i></button>
@@ -316,10 +316,6 @@ app.MapGet("/app", async ctx => {
                 animation: 150,
                 handle: '.drag-handle',
                 ghostClass: 'selected-card',
-                forceFallback: true,
-                fallbackTolerance: 3,
-                delay: 100,
-                delayOnTouchOnly: true,
                 onEnd: async () => {{
                     const ids = Array.from(list.querySelectorAll('.item-card')).map(el => parseInt(el.getAttribute('data-id')));
                     await fetch('/items/reorder', {{ method: 'PUT', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(ids) }});
